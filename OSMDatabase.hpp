@@ -95,15 +95,17 @@ private:
 
 	std::pair<LatLon,LatLon> bounds_ = std::make_pair( LatLon { NAN, NAN }, LatLon { NAN, NAN} );
 
-	KeyValueTable nodeTags_;
-	KeyValueTable relationTags_;
-	KeyValueTable wayTags_;
+	std::vector<OSMNode> 		nodes_;
+	KeyValueTable 				nodeTags_;
 
-	ValueTable relationMemberRoles_;
+	std::vector<OSMWay>			ways_;
+	KeyValueTable 				wayTags_;
 
 	std::vector<OSMRelation> 	relations_;
-	std::vector<OSMNode> 		nodes_;
-	std::vector<OSMWay>			ways_;
+	KeyValueTable 				relationTags_;
+
+	ValueTable 					relationMemberRoles_;
+
 };
 
 
