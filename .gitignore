@@ -13,9 +13,6 @@
 *.dylib
 *.dll
 
-# Fortran module files
-*.mod
-
 # Compiled Static libraries
 *.lai
 *.la
@@ -26,3 +23,14 @@
 *.exe
 *.out
 *.app
+
+
+# Eclipse project files
+.project
+.cproject
+
+# Project-specific files
+osm2bin
+*.osm
+*.bz2
+*.bin

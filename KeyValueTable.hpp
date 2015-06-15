@@ -1,0 +1,64 @@
+/*
+ * KeyValueTable.hpp
+ *
+ *  Created on: Jun 14, 2015
+ *      Author: jcassidy
+ */
+
+#ifndef KEYVALUETABLE_HPP_
+#define KEYVALUETABLE_HPP_
+
+
+class KeyValueTable {
+public:
+	unsigned addKey(const std::string k){ return keys_.addValue(k); }
+	unsigned addValue(const std::string v){ return values_.addValue(v); }
+
+	const std::string& getKey(unsigned ki){ return keys_.getValue(ki); }
+	const std::string& getValue(unsigned vi){ return values_.getValue(vi); }
+
+	bool keyValid(unsigned ki) const { return keys_.valueValid(ki); }
+	bool valueValid(unsigned vi) const { return values_.valueValid(vi); }
+
+	std::function<const std::string&(unsigned)> keyLookup() const { return [this](unsigned i){ return cref(keys_.getValue(i)); }; }
+	std::function<const std::string&(unsigned)> valueLookup() const { return [this](unsigned i){ return cref(values_.getValue(i)); }; }
+	std::function<std::pair<const std::string&,const std::string&>(std::pair<unsigned,unsigned>)> pairLookup() const
+			{ return [this](const std::pair<unsigned,unsigned> p){ return std::make_pair(cref(keys_.getValue(p.first)),cref(values_.getValue(p.second))); }; }
+
+	const std::vector<std::string>& keys() const 	{ return keys_.values(); }
+	const std::vector<std::string>& values() const 	{ return values_.values(); }
+
+private:
+	ValueTable keys_;
+	ValueTable values_;
+};
+
+
+/** A key-value table which is bound to a specific set of tags.
+ *
+ */
+
+class BoundKeyValueTable : public KeyValueTable {
+public:
+	BoundKeyValueTable(OSMEntity* e=nullptr) : entity_(e){}
+
+	void addTag(unsigned ki,unsigned vi)
+	{
+		assert(entity_);
+		assert(keyValid(ki));
+		assert(valueValid(vi));
+
+		entity_->addTag(ki,vi);
+	}
+
+	void activeEntity(OSMEntity* e){ entity_=e; }
+	OSMEntity* activeEntity() const { return entity_; }
+
+private:
+	OSMEntity* entity_=nullptr;
+};
+
+
+
+
+#endif /* KEYVALUETABLE_HPP_ */
