@@ -1,8 +1,5 @@
 #pragma once
 #include "OSMEntity.hpp"
-#include <boost/serialization/base_object.hpp>
-
-#include <boost/container/flat_map.hpp>
 
 
 
@@ -18,6 +15,11 @@ public:
 		unsigned long long 	id;
 		MemberType			type;
 		unsigned 			role;		// string table index
+
+	private:
+
+		template<class Archive> void serialize(Archive& ar,const unsigned){ ar & id & type & role ; }
+		friend class boost::serialization::access;
 	};
 
 	OSMRelation(unsigned long long id=0) : OSMEntity(id){}
@@ -30,10 +32,10 @@ public:
 private:
 	vector<Member> members_;
 
-//	friend boost::serialization::access;
-//	template<class Archive>void serialize(Archive& ar,unsigned int version){
-//		ar & boost::serialization::base_object<OSMEntity>(*this) & members_;
-//	}
+	template<class Archive>void serialize(Archive& ar,const unsigned)
+		{ ar & boost::serialization::base_object<OSMEntity>(*this) & members_; }
+	friend boost::serialization::access;
+
 };
 
 //istream& operator>>(istream& is,OSMRelation::MemberRole& r);

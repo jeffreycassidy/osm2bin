@@ -8,12 +8,18 @@
 #ifndef OSMDATABASE_HPP_
 #define OSMDATABASE_HPP_
 
+#include "OSMNode.hpp"
+#include "OSMWay.hpp"
+#include "OSMRelation.hpp"
 #include "ValueTable.hpp"
 #include "KeyValueTable.hpp"
+#include <boost/container/flat_map.hpp>
 
 class OSMDatabase {
 
 public:
+
+	OSMDatabase(){}
 
 	OSMDatabase(const std::pair<LatLon,LatLon>& bounds,
 			std::vector<OSMNode>&& nodes,
@@ -38,6 +44,7 @@ public:
 	void print() const
 	{
 		std::cout << "OSMDatabaseBuilder summary: " << std::endl;
+		std::cout << "  Bounds: " << bounds_.first << "-" << bounds_.second << std::endl;
 		std::cout << "  " << relations_.size() << " relations" << std::endl;
 		std::cout << "  " << nodes_.size() << " nodes" << std::endl;
 		std::cout << "  " << ways_.size() << " ways" << std::endl;
@@ -106,6 +113,10 @@ private:
 
 	ValueTable 					relationMemberRoles_;
 
+	template<class Archive>void serialize(Archive& ar,const unsigned ver)
+		{ ar & bounds_ & nodes_ & nodeTags_ & ways_ & wayTags_ & relations_ & relationTags_ & relationMemberRoles_; }
+
+	friend class boost::serialization::access;
 };
 
 

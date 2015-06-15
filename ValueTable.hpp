@@ -8,6 +8,11 @@
 #ifndef VALUETABLE_HPP_
 #define VALUETABLE_HPP_
 
+#include <string>
+#include <functional>
+#include <vector>
+#include <boost/serialization/vector.hpp>
+
 class ValueTable {
 public:
 	// adds a value, returns the index
@@ -30,6 +35,9 @@ public:
 
 private:
 	std::vector<std::string> values_;
+
+	template<class Archive>void serialize(Archive& ar, const unsigned ver){ ar & values_; }
+	friend class boost::serialization::access;
 };
 
 

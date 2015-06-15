@@ -1,23 +1,13 @@
 #pragma once
 #include "OSMEntity.hpp"
 
-#include <boost/serialization/base_object.hpp>
-
 #include <vector>
 
 
 class OSMWay : public OSMEntity {
-//
-//	friend boost::serialization::access;
-//	template<class Archive>void serialize(Archive& ar,unsigned int version){
-//		ar & boost::serialization::base_object<OSMEntity>(*this);
-//		ar & ndrefs;
-//	}
+
 
 public:
-
-//	bool is_closed() const { return ndrefs.front() == ndrefs.back(); }
-
 	OSMWay(const OSMWay&) = default;
 	OSMWay(OSMWay&& w) = default;
 	OSMWay& operator=(const OSMWay&) = default;
@@ -36,4 +26,8 @@ public:
 
 private:
 	std::vector<unsigned long long> ndrefs_;
+
+	template<class Archive>void serialize(Archive& ar,unsigned int)
+		{ ar & boost::serialization::base_object<OSMEntity>(*this) & ndrefs_; }
+	friend boost::serialization::access;
 };

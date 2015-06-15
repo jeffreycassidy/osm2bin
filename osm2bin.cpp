@@ -18,6 +18,11 @@
 #include "BoostBZ2Input.hpp"
 #include "SAX2ElementHandler.hpp"
 
+#include <boost/timer/timer.hpp>
+
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+
 using namespace std;
 using namespace xercesc;
 
@@ -48,6 +53,8 @@ int main(int argc,char **argv)
 {
 	xercesc::XMLPlatformUtils::Initialize();
 
+	bool outputBin = true;
+
 	string fn("hamilton_canada.osm.bz2");
 
 	if (argc > 1)
@@ -59,35 +66,72 @@ int main(int argc,char **argv)
 
 	InputSource* src=nullptr;
 
-	if (sfx == "bz2")
+	OSMDatabase db;
+
+	if (sfx == "bz2" || sfx == "osm")
 	{
-		string mid = suffix(base);
-		if (mid == "osm")
+		if (sfx == "bz2")
 		{
-			std::cout << "Reading from bzip2-compressed OSM XML file" << fn << std::endl;
-			src = new BoostBZ2FileInputSource(fn);
+			string mid = suffix(base);
+			if (mid == "osm")
+			{
+				std::cout << "Reading from bzip2-compressed OSM XML file" << fn << std::endl;
+				src = new BoostBZ2FileInputSource(fn);
+			}
+			else
+				std::cerr << "Did not recognize second extension " << mid << " in .bz2 file (expecting 'osm')" << std::endl;
 		}
-		else
-			std::cerr << "Did not recognize second extension " << mid << " in .bz2 file (expecting 'osm')" << std::endl;
+		else if (sfx == "osm")
+		{
+			std::cout << "Reading from uncompressed OSM XML file " << fn << std::endl;
+			src = new LocalFileInputSource(AutoXMLChPtr(fn.c_str()).get());
+		}
+		else {
+			std::cerr << "Invalid input source - closing" << std::endl;
+			return -1;
+		}
+
+		db = parseOSM(src);
 	}
-	else if (sfx == "osm")
+	else if (sfx == "bin")
 	{
-		std::cout << "Reading from uncompressed OSM XML file " << fn << std::endl;
-		src = new LocalFileInputSource(AutoXMLChPtr(fn.c_str()).get());
+		std::cout << "Reading from binary file" << fn << std::endl;
+		outputBin = false;
+		std::ifstream is(fn.c_str(),ios_base::in | ios_base::binary);
+		boost::archive::binary_iarchive ia(is);
+
+		ia & db;
 	}
 	else
 		std::cerr << "Type not recognized for file " << fn << std::endl;
 
-	if (!src)
+	if (outputBin)
 	{
-		std::cerr << "Invalid input source - closing" << std::endl;
-		return -1;
-	}
 
-	parseOSM(src);
+		string oBin(fn+".out.bin");
+		cout << "Writing to binary file " << oBin << endl;
+
+		{
+			boost::timer::auto_cpu_timer t;
+			std::ofstream os(oBin.c_str(),ios_base::out | ios_base::binary);
+			boost::archive::binary_oarchive oa(os);
+			oa & db;
+		}
+
+		cout << "Done" << endl;
+	}
 
 
 	delete src;
+
+
+	db.print();
+
+	db.showNode(958);
+
+	db.showWay(1);
+
+	db.showRelation(4);
 
 	// technically should close this up, but there are still some strings outstanding which will be deleted
 	//xercesc::XMLPlatformUtils::Terminate();
@@ -280,18 +324,9 @@ OSMDatabase parseOSM(xercesc::InputSource *src)
 		cout << "  " << setw(30) << p.first << "  " << p.second << endl;
 
 
-	OSMDatabase db = dbb.getDatabase();
+	return dbb.getDatabase();
 
 
-	db.print();
-
-	db.showNode(958);
-
-	db.showWay(1);
-
-	db.showRelation(4);
-
-	return db;
 }
 
 

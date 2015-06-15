@@ -5,23 +5,22 @@
 #include <utility>
 #include <cmath>
 
+#include <boost/serialization/serialization.hpp>
+#include <boost/serialization/utility.hpp>
+#include <boost/serialization/vector.hpp>
+
 struct LatLon {
 	double lat;
 	double lon;
 
-	template<class Archive>void serialize(Archive& ar,unsigned int ver){ ar & lat & lon; }
-
 	friend std::ostream& operator<<(std::ostream& os,LatLon ll);
+
+private:
+	template<class Archive>void serialize(Archive& ar,unsigned int ver){ ar & lat & lon; }
+	friend class boost::serialization::access;
 };
 
 class OSMNode : public OSMEntity {
-
-	//friend boost::serialization::access;
-
-	// TODO: Do correct base-class serialization (see Boost serialize docs)
-//	template<class Archive>void serialize(Archive& ar,unsigned int version)
-//		{ OSMEntity::serialize(ar,version); ar & coords_; }
-
 public:
 	OSMNode(unsigned long long id_=0,double lat=NAN,double lon=NAN) : OSMEntity(id_),coords_{lat,lon}{}
 
@@ -33,6 +32,10 @@ public:
 
 private:
 	LatLon coords_;
+
+	template<class Archive>void serialize(Archive& ar,const unsigned)
+		{ ar & boost::serialization::base_object<OSMEntity>(*this) & coords_; }
+	friend boost::serialization::access;
 };
 
 std::ostream& operator<<(std::ostream&,const OSMNode&);

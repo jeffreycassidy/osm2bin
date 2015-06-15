@@ -1,10 +1,12 @@
 #pragma once
 #include <iostream>
+#include <vector>
 #include <string>
 #include <map>
 #include <cmath>
 
-//#include <boost/serialization/serialization.hpp>
+#include <boost/serialization/serialization.hpp>
+#include <boost/serialization/base_object.hpp>
 
 class OSMEntity {
 public:
@@ -39,4 +41,7 @@ private:
 	//friend class OSMEntityHandler;
 	friend class OSMNodeElementHandler;
 	friend class OSMAttributeHandler;
+
+	template<class Archive>void serialize(Archive& ar,const unsigned ver){ ar & id_ & tags_; }
+	friend class boost::serialization::access;
 };

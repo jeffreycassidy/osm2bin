@@ -8,6 +8,9 @@
 #ifndef KEYVALUETABLE_HPP_
 #define KEYVALUETABLE_HPP_
 
+#include <string>
+#include <vector>
+#include <boost/serialization/serialization.hpp>
 
 class KeyValueTable {
 public:
@@ -31,6 +34,9 @@ public:
 private:
 	ValueTable keys_;
 	ValueTable values_;
+
+	template<class Archive>void serialize(Archive& ar,const unsigned ver){ ar & keys_ & values_; }
+	friend class boost::serialization::access;
 };
 
 
