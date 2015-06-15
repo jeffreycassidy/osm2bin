@@ -17,8 +17,8 @@ public:
 	unsigned addKey(const std::string k){ return keys_.addValue(k); }
 	unsigned addValue(const std::string v){ return values_.addValue(v); }
 
-	const std::string& getKey(unsigned ki){ return keys_.getValue(ki); }
-	const std::string& getValue(unsigned vi){ return values_.getValue(vi); }
+	const std::string& getKey(unsigned ki) const { return keys_.getValue(ki); }
+	const std::string& getValue(unsigned vi) const { return values_.getValue(vi); }
 
 	bool keyValid(unsigned ki) const { return keys_.valueValid(ki); }
 	bool valueValid(unsigned vi) const { return values_.valueValid(vi); }
