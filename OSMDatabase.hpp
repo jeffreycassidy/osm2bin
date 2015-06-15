@@ -13,7 +13,13 @@
 #include "OSMRelation.hpp"
 #include "ValueTable.hpp"
 #include "KeyValueTable.hpp"
+
 #include <boost/container/flat_map.hpp>
+#include <boost/range/algorithm.hpp>
+#include <boost/range/adaptor/filtered.hpp>
+#include <boost/range/adaptor/map.hpp>
+
+#include <unordered_map>
 
 class OSMDatabase {
 
@@ -41,64 +47,37 @@ public:
 	{}
 
 
-	void print() const
-	{
-		std::cout << "OSMDatabaseBuilder summary: " << std::endl;
-		std::cout << "  Bounds: " << bounds_.first << "-" << bounds_.second << std::endl;
-		std::cout << "  " << relations_.size() << " relations" << std::endl;
-		std::cout << "  " << nodes_.size() << " nodes" << std::endl;
-		std::cout << "  " << ways_.size() << " ways" << std::endl;
+	// print summary information on the database
+	void print() const;
 
-		std::cout << "  Relation member roles: ";
-		for(const auto r : relationMemberRoles_.values())
-			std::cout << r << "  ";
-		std::cout << std::endl;
-	}
+	// print full information for node/relation/way
+	void showNode(unsigned i) const;
+	void showRelation(unsigned i) const;
+	void showWay(unsigned i) const;
 
-	void showNode(unsigned i) const
-	{
-		std::cout << "Full details for node " << i << " (OSM ID " << nodes_[i].id() << ")" << std::endl;
-		std::cout << "  Coords (" << nodes_[i].coords().lat << "," << nodes_[i].coords().lon << ")" << std::endl;
+	std::vector<OSMNode> 		nodes() const { return nodes_; }
+	std::vector<OSMWay>  		ways() const { return ways_; }
+	std::vector<OSMRelation> 	relations() const { return relations_; }
 
-		for(auto p : nodes_[i].tags() | boost::adaptors::transformed(nodeTags_.pairLookup()))
-			std::cout << "  " << p.first << " = " << p.second << std::endl;
-	}
 
-	void showRelation(unsigned i) const
-	{
-		std::cout << "Full details for relation " << i << "(OSM ID " << relations_[i].id() << ")" << std::endl;
-		std::cout << " Tags" << std::endl;
-		for(auto p : relations_[i].tags() | boost::adaptors::transformed(relationTags_.pairLookup()))
-			std::cout << "  " << p.first << " = " << p.second << std::endl;
 
-		std::cout << " Members" << std::endl;
 
-		boost::container::flat_map<OSMRelation::MemberType,std::string> typeMap;
 
-		typeMap.insert(std::make_pair(OSMRelation::Node,std::string("node")));
-		typeMap.insert(std::make_pair(OSMRelation::Way,std::string("way")));
-		typeMap.insert(std::make_pair(OSMRelation::Relation,std::string("relation")));
 
-		for(auto p : relations_[i].members())
-		{
-			std::cout << "  type='" << typeMap.at(p.type) << " ID " << p.id << "  role='" << relationMemberRoles_.getValue(p.role) << "' " << std::endl;
-		}
-	}
 
-	void showWay(unsigned i) const
-	{
-		std::cout << "Full details for way" << i << " (OSM ID " << ways_[i].id() << ")" << std::endl;
-		std::cout << " Tags" << std::endl;
-		for(auto p : ways_[i].tags() | boost::adaptors::transformed(wayTags_.pairLookup()))
-			std::cout << "  " << p.first << " = " << p.second << std::endl;
-		std::cout << " Node refs" << std::endl;
+	std::vector<std::pair<std::string,unsigned>> nodeTagKeys() const { return tagKeys(nodes_,nodeTags_); }
+	std::vector<std::pair<std::string,unsigned>> wayTagKeys() const { return tagKeys(ways_,wayTags_); }
+	std::vector<std::pair<std::string,unsigned>> relationTagKeys() const { return tagKeys(relations_,relationTags_); }
 
-		for(auto p: ways_[i].ndrefs())
-			std::cout << "  " << p << std::endl;
-	}
-
+	std::vector<std::pair<std::string,unsigned>> nodeTagValuesForKey(const std::string k) const { return tagValuesForKey(k,nodes_,nodeTags_); }
+	std::vector<std::pair<std::string,unsigned>> wayTagValuesForKey(const std::string k) const { return tagValuesForKey(k,ways_,wayTags_); }
+	std::vector<std::pair<std::string,unsigned>> relationTagValuesForKey(const std::string k) const { return tagValuesForKey(k,relations_,relationTags_); }
 
 private:
+
+	template<typename OSMEntityRange>std::vector<std::pair<std::string,unsigned>> tagKeys (OSMEntityRange R,const KeyValueTable& tbl) const;
+	template<typename OSMEntityRange>std::vector<std::pair<std::string,unsigned>> tagValuesForKey(const std::string,OSMEntityRange R,const KeyValueTable& tbl) const;
+
 
 	std::pair<LatLon,LatLon> bounds_ = std::make_pair( LatLon { NAN, NAN }, LatLon { NAN, NAN} );
 
@@ -118,6 +97,48 @@ private:
 
 	friend class boost::serialization::access;
 };
+
+template<typename OSMEntityRange>std::vector<std::pair<std::string,unsigned>> OSMDatabase::tagKeys(OSMEntityRange r,const KeyValueTable& tbl) const
+{
+	std::vector<std::pair<std::string,unsigned>> v(tbl.keys().size());
+
+	for(unsigned ki=0;ki<v.size();++ki)
+		v[ki] = std::make_pair(tbl.keys()[ki],0);
+
+	for(const auto& entity : r)
+		for(const auto ki : entity.tags() | boost::adaptors::map_keys)
+			v[ki].second++;
+
+	return v;
+}
+
+template<typename OSMEntityRange>std::vector<std::pair<std::string,unsigned>> OSMDatabase::tagValuesForKey(const std::string k,OSMEntityRange r,const KeyValueTable& tbl) const
+{
+	// lookup integer ID corresponding to key name k
+	auto p = std::find(tbl.keys().begin(),tbl.keys().end(),k);
+
+	std::unordered_map<unsigned,unsigned> m;
+
+	if (p != tbl.keys().end())
+	{
+		unsigned ki=p-tbl.keys().begin();
+
+		for(const auto& entity : r)
+		{
+			for(const auto p : entity.tags() | boost::adaptors::filtered([ki](std::pair<const unsigned,unsigned> p){ return p.first==ki; }))
+				m[p.second]++;
+		}
+
+	}
+
+
+	std::vector<std::pair<std::string,unsigned>> v;
+
+	for(const auto p : m)
+		v.emplace_back(tbl.getValue(p.first),p.second);
+
+	return v;
+}
 
 
 #endif /* OSMDATABASE_HPP_ */

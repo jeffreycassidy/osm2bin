@@ -23,6 +23,9 @@ private:
 class OSMNode : public OSMEntity {
 public:
 	OSMNode(unsigned long long id_=0,double lat=NAN,double lon=NAN) : OSMEntity(id_),coords_{lat,lon}{}
+	OSMNode(OSMNode&&) = default;
+	OSMNode(const OSMNode&) = default;
+	OSMNode& operator=(OSMNode&&) = default;
 
 	void coords(LatLon pos){ coords_=pos; }
 	LatLon coords() const { return coords_; }

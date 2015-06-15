@@ -76,8 +76,6 @@ public:
 			assert(inserted);
 			strs_.push_back(std::string(XMLChString(v)));
 			newN_(strs_.back(),p->second);
-
-			std::cout << " New table value '" << strs_.back() << " with index " << p->second << std::endl;
 		}
 
 		vN_(p->second);

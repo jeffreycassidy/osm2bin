@@ -133,6 +133,36 @@ int main(int argc,char **argv)
 
 	db.showRelation(4);
 
+	cout << "All node tag keys: " << endl;
+	for(const auto p : db.nodeTagKeys())
+		cout << "  " << setw(30) << p.first << " " << p.second << endl;
+
+
+	string k="highway";
+	cout << "All tag values for node key " << k << endl;
+	for(const auto p : db.nodeTagValuesForKey(k))
+		cout << "  " << setw(30) << p.first << " " << p.second << endl;
+
+	cout << "All way tag keys: " << endl;
+		for(const auto p : db.wayTagKeys())
+			cout << "  " << setw(30) << p.first << " " << p.second << endl;
+
+	k="highway";
+	cout << "All tag values for way key " << k << endl;
+	for(const auto p : db.wayTagValuesForKey(k))
+		cout << "  " << setw(30) << p.first << " " << p.second << endl;
+
+
+	cout << "All relation tag keys: " << endl;
+		for(const auto p : db.relationTagKeys())
+			cout << "  " << setw(30) << p.first << " " << p.second << endl;
+
+	k="water";
+	cout << "All tag values for relation key " << k << endl;
+	for(const auto p : db.relationTagValuesForKey(k))
+		cout << "  " << setw(30) << p.first << " " << p.second << endl;
+
+
 	// technically should close this up, but there are still some strings outstanding which will be deleted
 	//xercesc::XMLPlatformUtils::Terminate();
 }
@@ -281,14 +311,159 @@ OSMDatabase parseOSM(xercesc::InputSource *src)
 			makeTypedAttributeHandler<double>([&dbb](double lon){dbb.currentNode()->coords().lon=lon; }));
 
 	nodeTagHandler.addKey("name",&nodeTagStringTable);
-	nodeTagHandler.ignoreTagWithKey("wikipedia");
+
+	std::vector<std::string> nodeTagKeysToIgnore{
+		"source",
+		"created_by",
+		"crossing",
+		"gates",
+		"lights",
+		"railway",
+		"go_zone",
+		"operator",
+		"crossing_ref",
+		"red_light_camera",
+		"button",
+		"wheelchair",
+		"fixme",
+		"noexit",
+		"guidepost",
+		"layer",
+		"power",
+		"aeroway",
+		"drive_through",
+		"dispensing",
+		"alt_name",
+		"drive_thru",
+		"brand",
+		"opening_hours",
+		"tower:type",
+		"phone",
+		"barrier",
+		"traffic_calming",
+		"emergency",
+		"note",
+		"fee",
+		"fireplace",
+		"FIXME",
+		"indoor",
+		"old_name",
+		"internet_access",
+		"building:levels",
+		"board_type",
+		"information",
+		"office",
+		"route",
+		"attribution",
+		"material",
+		"contents",
+		"height",
+		"works:type",
+		"pipeline",
+		"landuse",
+		"content",
+		"color",
+		"trim",
+		"bench",
+		"countdown_signal",
+		"covered",
+		"hiking",
+		"map_size",
+		"map_type",
+		"entrance",
+		"toilets",
+		"signal",
+		"colour",
+		"designation",
+		"motor_vehicle",
+		"vehicle",
+		"disused",
+		"vending",
+		"email",
+		"smoking",
+		"capacity",
+		"computer",
+		"backrest",
+		"street_lamp",
+		"booth",
+		"banquet",
+		"crossing:barrier",
+		"crossing:bell",
+		"supervised",
+		"lanes",
+		"surface",
+		"motorcar",
+		"bollard",
+		"url",
+		"services",
+		"seats",
+		"tactile_paving"
+	};
+
+	std::vector<std::string> wayTagKeysToIgnore{
+		"source",
+		"electrified",
+		"gauge",
+		"line",
+		"operator",
+		"created_by",
+		"handrail:right",
+		"handrail:left",
+		"attribution",
+		"note",
+		"FIXME",
+		"alt_name",
+		"wikipedia",
+		"website",
+		"voltage",
+		"fee",
+		"park_ride",
+		"iata",
+		"parking:condition:area",
+		"validate:no_name",
+		"trail_visibility",
+		"color",
+		"evangelical",
+		"start_date",
+		"fireplace",
+		"fax",
+		"roof:height"
+	};
+
+	nodeTagHandler.addRule(new OSMTagRegexKeyRule("addr:.*",&ignoreTag));
 	nodeTagHandler.addRule(new OSMTagRegexKeyRule("name:.*",&ignoreTag));
 	nodeTagHandler.addRule(new OSMTagRegexKeyRule("is_in.*",&ignoreTag));
+	nodeTagHandler.addRule(new OSMTagRegexKeyRule("payment:.*",&ignoreTag));
+	nodeTagHandler.addRule(new OSMTagRegexKeyRule("contact:.*",&ignoreTag));
+	nodeTagHandler.addRule(new OSMTagRegexKeyRule("currency:.*",&ignoreTag));
+	nodeTagHandler.addRule(new OSMTagRegexKeyRule("canvec:.*",&ignoreTag));
+	nodeTagHandler.addRule(new OSMTagRegexKeyRule("generator:.*",&ignoreTag));
+	nodeTagHandler.addRule(new OSMTagRegexKeyRule("toilets:.*",&ignoreTag));
+	nodeTagHandler.addRule(new OSMTagRegexKeyRule("wetap:.*",&ignoreTag));
+
+
+	for(const auto& k : nodeTagKeysToIgnore)
+		nodeTagHandler.ignoreTagWithKey(k);
 
 	osmHandler.addElementHandler("way",&wayHandler);
 
 	wayHandler.addElementHandler("tag",&wayTagHandler);
 	wayHandler.addElementHandler("nd",&ndHandler);
+
+	wayTagHandler.addKey("name",&wayTagStringTable);
+	wayTagHandler.addKey("name:en",&wayTagStringTable);
+
+
+	wayTagHandler.addRule(new OSMTagRegexKeyRule("geobase:.*",&ignoreTag));
+	wayTagHandler.addRule(new OSMTagRegexKeyRule("canvec:.*",&ignoreTag));
+	wayTagHandler.addRule(new OSMTagRegexKeyRule("statscan:.*",&ignoreTag));
+	wayTagHandler.addRule(new OSMTagRegexKeyRule("addr:.*",&ignoreTag));
+	wayTagHandler.addRule(new OSMTagRegexKeyRule("name:.*",&ignoreTag));
+	wayTagHandler.addRule(new OSMTagRegexKeyRule("payment:.*",&ignoreTag));
+	wayTagHandler.addRule(new OSMTagRegexKeyRule("capacity:.*",&ignoreTag));
+
+	for(const auto& k : wayTagKeysToIgnore)
+		wayTagHandler.ignoreTagWithKey(k);
 
 	osmHandler.addElementHandler("relation",&relationHandler);
 	relationHandler.addElementHandler("tag",&relationTagHandler);
@@ -299,6 +474,31 @@ OSMDatabase parseOSM(xercesc::InputSource *src)
 	relationHandler.ignoreAttribute("changeset");
 	relationHandler.ignoreAttribute("uid");
 	relationHandler.ignoreAttribute("user");
+
+	std::vector<std::string> relationTagKeysToIgnore{
+		"wikipedia",
+		"note",
+		"attribution",
+		"is_in",
+		"fixme",
+		"day_off",
+		"day_on",
+		"hour_off",
+		"hour_on",
+		"FXIME",
+		"FIXME"
+	};
+
+	relationTagHandler.addKey("name",&relationTagStringTable);
+	relationTagHandler.addKey("name:en",&relationTagStringTable);
+
+	relationTagHandler.addRule(new OSMTagRegexKeyRule("name:.*",&ignoreTag));
+	relationTagHandler.addRule(new OSMTagRegexKeyRule("canvec:.*",&ignoreTag));
+	relationTagHandler.addRule(new OSMTagRegexKeyRule("wikipedia:.*",&ignoreTag));
+	relationTagHandler.addRule(new OSMTagRegexKeyRule("addr:.*",&ignoreTag));
+
+	for(const auto& k : relationTagKeysToIgnore)
+		relationTagHandler.ignoreTagWithKey(k);
 
 	SAX2ContentHandler handler(&rootHandler);
 

@@ -4,6 +4,7 @@
 #include <string>
 #include <map>
 #include <cmath>
+#include <algorithm>
 
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/base_object.hpp>
@@ -15,6 +16,7 @@ public:
 	OSMEntity(OSMEntity&&) 					= default;
 	OSMEntity(const OSMEntity&) 			= default;
 	OSMEntity& operator=(const OSMEntity&) 	= default;
+	OSMEntity& operator=(OSMEntity&&)		= default;
 
 	virtual ~OSMEntity(){}
 
@@ -26,21 +28,16 @@ public:
 	static bool IDEqual(const OSMEntity& a,const OSMEntity& b){ return a.id_==b.id_; }
 	static bool IDOrder(const OSMEntity& a,const OSMEntity& b){ return a.id_<b.id_; }
 
-	//template<class Archive>void serialize(Archive& ar,unsigned int version){ ar & id_ & tags_; }
-
 	void id(unsigned long long newID){ id_=newID; }
 
 	const std::vector<std::pair<unsigned,unsigned>>& tags() const { return tags_; }
 
-	//typedef std::vector<std::pair<unsigned,unsigned>>::const_iterator tag_const_iterator;
+	void sortTags(){ std::sort(tags_.begin(),tags_.end(),
+			[](const std::pair<unsigned,unsigned> lhs,const std::pair<unsigned,unsigned> rhs){ return lhs.first<rhs.first; } ); }
 
 private:
 	unsigned long long id_;
 	std::vector<std::pair<unsigned,unsigned>> tags_;
-
-	//friend class OSMEntityHandler;
-	friend class OSMNodeElementHandler;
-	friend class OSMAttributeHandler;
 
 	template<class Archive>void serialize(Archive& ar,const unsigned ver){ ar & id_ & tags_; }
 	friend class boost::serialization::access;
