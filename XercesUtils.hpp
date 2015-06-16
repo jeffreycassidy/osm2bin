@@ -25,6 +25,16 @@
 
 #include <unordered_map>
 
+
+/** RAII approach to starting and terminating xercesc platform */
+
+class XMLPlatform
+{
+public:
+	XMLPlatform(){ xercesc::XMLPlatformUtils::Initialize(); }
+	~XMLPlatform(){ xercesc::XMLPlatformUtils::Terminate(); }
+};
+
 class AutoXMLChPtr
 {
 public:
@@ -122,26 +132,29 @@ public:
 	~XMLStringTableBase()
 	{
 		for(const XMLCh* p : imap_ | boost::adaptors::map_keys)
-			xercesc::XMLString::release((XMLCh**)&p);
+			delete (p);
+			//xercesc::XMLString::release((XMLCh**)&p);
 	}
 
 	std::pair<iterator,bool> lookupOrInsert(const XMLCh* k)
 	{
-		std::pair<iterator,bool> p = imap_.insert(std::make_pair(k,std::make_pair(std::string(),imap_.size())));
+		iterator newIt;
+		bool inserted;
+		std::tie(newIt,inserted) = imap_.insert(std::make_pair(k,std::make_pair(std::string(),imap_.size())));
 
 		// defer creation of the std::string representation until we know it doesn't already exist
-		if (p.second)
+		if (inserted)
 		{
-			p.first->second.first = XMLChString(k);
+			newIt->second.first = XMLChString(k);
 
 			// Cast away constness of the key and make it a copy of the argument.
 			// Does not break the hash because although the pointers are different, the values pointed to compare the same.
 			XMLSize_t len = xercesc::XMLString::stringLen(k);
-			(XMLCh*&)p.first->first = new XMLCh[len+1];					// <== cast way constness of key
-			xercesc::XMLString::copyString((XMLCh*&)p.first->first,k);
+			(XMLCh*&)(newIt->first) = new XMLCh[len+1];					// <== cast way constness of key
+			xercesc::XMLString::copyString((XMLCh*&)(newIt->first),k);
 		}
 
-		return p;
+		return std::make_pair(newIt,inserted);
 	}
 
 	std::pair<iterator,bool> lookupOrInsert(const std::string k)

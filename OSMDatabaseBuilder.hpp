@@ -18,8 +18,6 @@
 
 #include <functional>
 
-
-
 class OSMDatabase;
 
 class OSMDatabaseBuilder {
@@ -70,16 +68,11 @@ public:
 
 	OSMDatabase getDatabase()
 	{
-		std::cout << "Sorting nodes" << endl;
 		for (OSMNode& n : nodes_)
 			n.sortTags();
 
-		std::cout << "Sorting ways" << endl;
-
 		for(OSMWay& w : ways_)
 			w.sortTags();
-
-		std::cout << "Sorting relations" << endl;
 
 		for(OSMRelation& r : relations_)
 			r.sortTags();

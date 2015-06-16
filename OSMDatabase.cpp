@@ -8,59 +8,95 @@
 #include "OSMDatabase.hpp"
 #include <boost/range/adaptor/transformed.hpp>
 
+using namespace std;
 
 void OSMDatabase::print() const
 {
-	std::cout << "OSMDatabaseBuilder summary: " << std::endl;
-	std::cout << "  Bounds: " << bounds_.first << "-" << bounds_.second << std::endl;
-	std::cout << "  " << relations_.size() << " relations" << std::endl;
-	std::cout << "  " << nodes_.size() << " nodes" << std::endl;
-	std::cout << "  " << ways_.size() << " ways" << std::endl;
+	cout << "OSMDatabaseBuilder summary: " << endl;
+	cout << "  Bounds: " << bounds_.first << "-" << bounds_.second << endl;
+	cout << "  " << relations_.size() << " relations" << endl;
+	cout << "  " << nodes_.size() << " nodes" << endl;
+	cout << "  " << ways_.size() << " ways" << endl;
 
-	std::cout << "  Relation member roles: ";
+	cout << "  Relation member roles: ";
 	for(const auto r : relationMemberRoles_.values())
-		std::cout << r << "  ";
-	std::cout << std::endl;
+		cout << r << "  ";
+	cout << endl;
 }
 
-void OSMDatabase::showNode(unsigned i) const
+void OSMDatabase::showNode(const unsigned i) const
 {
-	std::cout << "Full details for node " << i << " (OSM ID " << nodes_[i].id() << ")" << std::endl;
-	std::cout << "  Coords (" << nodes_[i].coords().lat << "," << nodes_[i].coords().lon << ")" << std::endl;
+	if (i >= nodes_.size())
+	{
+		cout  << "No such node" << endl;
+		return;
+	}
+	cout << "Full details for node " << i << " (OSM ID " << nodes_[i].id() << ")" << endl;
+	cout << "  Coords (" << nodes_[i].coords().lat << "," << nodes_[i].coords().lon << ")" << endl;
 
 	for(auto p : nodes_[i].tags() | boost::adaptors::transformed(nodeTags_.pairLookup()))
-		std::cout << "  " << p.first << " = " << p.second << std::endl;
+		cout << "  " << p.first << " = " << p.second << endl;
 }
 
-void OSMDatabase::showRelation(unsigned i) const
+void OSMDatabase::showRelation(const unsigned i) const
 {
-	std::cout << "Full details for relation " << i << "(OSM ID " << relations_[i].id() << ")" << std::endl;
-	std::cout << " Tags" << std::endl;
+	if (i >= relations_.size())
+	{
+		cout  << "No such relation" << endl;
+		return;
+	}
+
+	cout << "Full details for relation " << i << "(OSM ID " << relations_[i].id() << ")" << endl;
+	cout << " Tags" << endl;
 	for(auto p : relations_[i].tags() | boost::adaptors::transformed(relationTags_.pairLookup()))
-		std::cout << "  " << p.first << " = " << p.second << std::endl;
+		cout << "  " << p.first << " = " << p.second << endl;
 
-	std::cout << " Members" << std::endl;
+	cout << " Members" << endl;
 
-	boost::container::flat_map<OSMRelation::MemberType,std::string> typeMap;
+	boost::container::flat_map<OSMRelation::MemberType,string> typeMap;
 
-	typeMap.insert(std::make_pair(OSMRelation::Node,std::string("node")));
-	typeMap.insert(std::make_pair(OSMRelation::Way,std::string("way")));
-	typeMap.insert(std::make_pair(OSMRelation::Relation,std::string("relation")));
+	typeMap.insert(make_pair(OSMRelation::Node,string("node")));
+	typeMap.insert(make_pair(OSMRelation::Way,string("way")));
+	typeMap.insert(make_pair(OSMRelation::Relation,string("relation")));
 
 	for(auto p : relations_[i].members())
 	{
-		std::cout << "  type='" << typeMap.at(p.type) << " ID " << p.id << "  role='" << relationMemberRoles_.getValue(p.role) << "' " << std::endl;
+		cout << "  type='" << typeMap.at(p.type) << " ID " << p.id << "  role='" << relationMemberRoles_.getValue(p.role) << "' " << endl;
 	}
 }
 
-void OSMDatabase::showWay(unsigned i) const
+void OSMDatabase::showWay(const unsigned i) const
 {
-	std::cout << "Full details for way " << i << " (OSM ID " << ways_[i].id() << ")" << std::endl;
-	std::cout << " Tags" << std::endl;
+	if (i >= ways_.size())
+	{
+		cout  << "No such way" << endl;
+		return;
+	}
+	cout << "Full details for way " << i << " (OSM ID " << ways_[i].id() << ")" << endl;
+	cout << " Tags" << endl;
 	for(auto p : ways_[i].tags() | boost::adaptors::transformed(wayTags_.pairLookup()))
-		std::cout << "  " << p.first << " = " << p.second << std::endl;
-	std::cout << " Node refs" << std::endl;
+		cout << "  " << p.first << " = " << p.second << endl;
+	cout << " Node refs" << endl;
 
 	for(auto p: ways_[i].ndrefs())
-		std::cout << "  " << p << std::endl;
+		cout << "  " << p << endl;
+}
+
+vector<LatLon> OSMDatabase::extractPoly(const OSMWay& way) const
+{
+	vector<LatLon> ll;
+
+	// extract all points from way
+	for(const auto nd : way.ndrefs())
+	{
+		const auto n_it = idToNodeMap_.find(nd);
+		if (n_it == idToNodeMap_.end())
+			cout << "Warning: dangling reference to node " << nd << " in extractPoly(OSMWay)" << endl;
+		else
+		{
+			const OSMNode& n = *(n_it->second);
+			ll.push_back(n.coords());
+		}
+	}
+	return ll;
 }

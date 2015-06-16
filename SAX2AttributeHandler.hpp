@@ -16,6 +16,8 @@
 
 #include <boost/container/flat_map.hpp>
 
+#include <unordered_map>
+
 /** Abstract class to handle element attributes
  *
  */
@@ -40,6 +42,27 @@ public:
 extern IgnoreAttribute ignoreAttribute;
 
 
+
+/** Prints a warning the first time it encounters an unknown attribute
+ *
+ */
+
+class WarnAttribute : public SAX2AttributeHandler {
+public:
+	WarnAttribute(std::string elementType) : m_eltype(elementType){}
+	void process(const std::string k,const XMLCh* v)
+	{
+		auto p = m_attributes.insert(make_pair(k,1));
+		if (p.second)
+			std::cout << "WARNING: Unhandled attribute '" << k << "' on element of type '" << m_eltype << "' (notifying on first occurrence only)" << std::endl;
+		else
+			p.first->second++;
+	}
+
+private:
+	std::string m_eltype="?unspecified?";
+	std::unordered_map<std::string,unsigned> m_attributes;
+};
 
 
 /** Displays an info message for an unknown/unexpected attribute

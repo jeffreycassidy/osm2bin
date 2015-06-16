@@ -9,20 +9,14 @@
 #include <boost/serialization/utility.hpp>
 #include <boost/serialization/vector.hpp>
 
-struct LatLon {
-	double lat;
-	double lon;
+#include "LatLon.h"
 
-	friend std::ostream& operator<<(std::ostream& os,LatLon ll);
+#include <limits>
 
-private:
-	template<class Archive>void serialize(Archive& ar,unsigned int ver){ ar & lat & lon; }
-	friend class boost::serialization::access;
-};
 
 class OSMNode : public OSMEntity {
 public:
-	OSMNode(unsigned long long id_=0,double lat=NAN,double lon=NAN) : OSMEntity(id_),coords_{lat,lon}{}
+	OSMNode(unsigned long long id_=0,float lat=std::numeric_limits<float>::quiet_NaN(),float lon=std::numeric_limits<float>::quiet_NaN()) : OSMEntity(id_),coords_{lat,lon}{}
 	OSMNode(OSMNode&&) = default;
 	OSMNode(const OSMNode&) = default;
 	OSMNode& operator=(OSMNode&&) = default;

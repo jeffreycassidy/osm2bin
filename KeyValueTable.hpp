@@ -11,6 +11,11 @@
 #include <string>
 #include <vector>
 #include <boost/serialization/serialization.hpp>
+#include <cassert>
+
+#include "OSMEntity.hpp"
+#include "ValueTable.hpp"
+
 
 class KeyValueTable {
 public:
@@ -19,9 +24,14 @@ public:
 
 	const std::string& getKey(unsigned ki) const { return keys_.getValue(ki); }
 	const std::string& getValue(unsigned vi) const { return values_.getValue(vi); }
+	std::pair<std::string,std::string> getKeyValue(std::pair<unsigned,unsigned> p) const
+			{ return std::make_pair(keys_.getValue(p.first),values_.getValue(p.second)); }
 
 	bool keyValid(unsigned ki) const { return keys_.valueValid(ki); }
 	bool valueValid(unsigned vi) const { return values_.valueValid(vi); }
+
+	unsigned getIndexForKeyString(const std::string s) const { return keys_.getIndexOfValue(s); }
+	unsigned getIndexForValueString(const std::string s) const { return values_.getIndexOfValue(s); }
 
 	std::function<const std::string&(unsigned)> keyLookup() const { return [this](unsigned i){ return cref(keys_.getValue(i)); }; }
 	std::function<const std::string&(unsigned)> valueLookup() const { return [this](unsigned i){ return cref(values_.getValue(i)); }; }

@@ -147,9 +147,6 @@ public:
 			auto p = attributeMap_.find(t);
 			if (p == attributeMap_.end())		// not found
 			{
-				cout << "Attribute handler not found for attribute '" << std::string(XMLChString(t)) << "' in element '" << getName() << '\'' << endl;
-				for(const auto p : attributeMap_)
-					cout << "  " << std::string(XMLChString(p.first)) << std::endl;
 				assert(defaultAttributeHandler_);
 				defaultAttributeHandler_->process(t,v);
 			}

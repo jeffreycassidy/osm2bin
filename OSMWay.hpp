@@ -16,12 +16,9 @@ public:
 
 	void addNode(unsigned long long id_){ ndrefs_.push_back(id_); }
 
-	//unsigned getNRefs() const { return ndrefs.size(); }
+	bool isClosed() const { return ndrefs_.front() == ndrefs_.back(); }
 
-	//const std::vector<unsigned long long>& getRefs() const { return ndrefs; }
-
-	//std::pair<std::vector<unsigned long long>::const_iterator,std::vector<unsigned long long>::const_iterator> getRefsRange() const { return make_pair(ndrefs.begin(),ndrefs.end()); }
-
+	// data access
 	const std::vector<unsigned long long>& ndrefs() const { return ndrefs_; }
 
 private:

@@ -44,7 +44,9 @@ public:
 				relations_(std::move(relations)),
 				relationTags_(std::move(relationTags)),
 				relationMemberRoles_(std::move(relationMemberRoles))
-	{}
+	{
+		buildIDMap_();
+	}
 
 
 	// print summary information on the database
@@ -55,23 +57,75 @@ public:
 	void showRelation(unsigned i) const;
 	void showWay(unsigned i) const;
 
-	std::vector<OSMNode> 		nodes() const { return nodes_; }
-	std::vector<OSMWay>  		ways() const { return ways_; }
-	std::vector<OSMRelation> 	relations() const { return relations_; }
+	const std::vector<OSMNode>& 		nodes() const { return nodes_; }
+	const std::vector<OSMWay>&  		ways() const { return ways_; }
+	const std::vector<OSMRelation>& 	relations() const { return relations_; }
 
+	const KeyValueTable& nodeTags() const { return nodeTags_; }
+	const KeyValueTable& wayTags() const { return wayTags_; }
+	const KeyValueTable& relationTags() const { return relationTags_; }
+	const ValueTable& relationRoles() const { return relationMemberRoles_; }
+
+	std::vector<LatLon> extractPoly(const OSMWay& way) const;
+
+	const OSMRelation& 	relationFromID(unsigned long long id) const
+	{
+		return *idToRelationMap_.at(id);
+	}
+	const OSMWay& 		wayFromID(unsigned long long id) const
+	{
+		return *idToWayMap_.at(id);
+	}
+	const OSMWay*		wayPtrFromID(unsigned long long id) const
+	{
+		const auto it = idToWayMap_.find(id);
+		if (it != idToWayMap_.end())
+			return it->second;
+		else
+			return nullptr;
+	}
+	const OSMNode& 		nodeFromID(unsigned long long id) const
+	{
+		return *idToNodeMap_.at(id);
+	}
+
+	const OSMNode* 		nodePtrFromID(unsigned long long id) const
+		{
+			const auto it = idToNodeMap_.find(id);
+			return it == idToNodeMap_.end() ? nullptr : it->second;
+		}
+
+	std::vector<LatLon> corners() const
+	{
+		return std::vector<LatLon>{
+			bounds_.first,
+			LatLon(bounds_.second.lat,bounds_.first.lon),
+			bounds_.second,
+			LatLon(bounds_.first.lat,bounds_.second.lon)
+		};
+	}
+
+	// returns all key string values for a given entity type
 	std::vector<std::pair<std::string,unsigned>> nodeTagKeys() const { return tagKeys(nodes_,nodeTags_); }
 	std::vector<std::pair<std::string,unsigned>> wayTagKeys() const { return tagKeys(ways_,wayTags_); }
 	std::vector<std::pair<std::string,unsigned>> relationTagKeys() const { return tagKeys(relations_,relationTags_); }
 
+	// returns all string values for a given key over all of an entity type (nodes/ways/relations)
 	std::vector<std::pair<std::string,unsigned>> nodeTagValuesForKey(const std::string k) const { return tagValuesForKey(k,nodes_,nodeTags_); }
 	std::vector<std::pair<std::string,unsigned>> wayTagValuesForKey(const std::string k) const { return tagValuesForKey(k,ways_,wayTags_); }
 	std::vector<std::pair<std::string,unsigned>> relationTagValuesForKey(const std::string k) const { return tagValuesForKey(k,relations_,relationTags_); }
+
+	// map bounds reported by OSM file
+	std::pair<LatLon,LatLon> bounds() const { return bounds_; }
 
 private:
 
 	template<typename OSMEntityRange>std::vector<std::pair<std::string,unsigned>> tagKeys (OSMEntityRange R,const KeyValueTable& tbl) const;
 	template<typename OSMEntityRange>std::vector<std::pair<std::string,unsigned>> tagValuesForKey(const std::string,OSMEntityRange R,const KeyValueTable& tbl) const;
 
+	std::unordered_map<unsigned long long,const OSMNode*> idToNodeMap_;
+	std::unordered_map<unsigned long long,const OSMWay*> idToWayMap_;
+	std::unordered_map<unsigned long long,const OSMRelation*> idToRelationMap_;
 
 	std::pair<LatLon,LatLon> bounds_ = std::make_pair( LatLon { NAN, NAN }, LatLon { NAN, NAN} );
 
@@ -87,7 +141,39 @@ private:
 	ValueTable 					relationMemberRoles_;
 
 	template<class Archive>void serialize(Archive& ar,const unsigned ver)
-		{ ar & bounds_ & nodes_ & nodeTags_ & ways_ & wayTags_ & relations_ & relationTags_ & relationMemberRoles_; }
+		{
+			ar & bounds_ & nodes_ & nodeTags_ & ways_ & wayTags_ & relations_ & relationTags_ & relationMemberRoles_;
+			buildIDMap_();
+		}
+
+	void buildIDMap_()
+	{
+		idToWayMap_.clear();
+		idToNodeMap_.clear();
+		idToRelationMap_.clear();
+
+		idToNodeMap_.reserve(nodes_.size());
+		idToRelationMap_.reserve(relations_.size());
+		idToWayMap_.reserve(ways_.size());
+
+		// build ID to entity (node/way/relation) map
+		bool inserted;
+		for(const auto& w : ways_)
+		{
+			tie(std::ignore,inserted) = idToWayMap_.insert(std::make_pair(w.id(),&w));
+			assert(inserted);
+		}
+		for(const auto& r : relations_)
+		{
+			tie(std::ignore,inserted) = idToRelationMap_.insert(std::make_pair(r.id(),&r));
+			assert(inserted);
+		}
+		for(const auto& n : nodes_)
+		{
+			tie(std::ignore,inserted) = idToNodeMap_.insert(std::make_pair(n.id(),&n));
+			assert(inserted);
+		}
+	}
 
 	friend class boost::serialization::access;
 };

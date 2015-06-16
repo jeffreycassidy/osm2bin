@@ -5,8 +5,6 @@
 
 #include <vector>
 
-using namespace std;
-
 class OSMRelation : public OSMEntity {
 public:
 	typedef enum { InvalidType, Node, Way, Relation } MemberType;
@@ -30,7 +28,7 @@ public:
 	const std::vector<Member>& members() const { return members_; }
 
 private:
-	vector<Member> members_;
+	std::vector<Member> members_;
 
 	template<class Archive>void serialize(Archive& ar,const unsigned)
 		{ ar & boost::serialization::base_object<OSMEntity>(*this) & members_; }
