@@ -8,6 +8,10 @@
 #include <iostream>
 #include <fstream>
 
+#include <string>
+#include <cinttypes>
+#include <utility>
+
 #include <xercesc/sax2/XMLReaderFactory.hpp>
 #include <xercesc/util/OutOfMemoryException.hpp>
 
@@ -29,7 +33,7 @@ using namespace xercesc;
 void parseXML(xercesc::InputSource* src,SAX2ContentHandler* handler);
 OSMDatabase parseOSM(xercesc::InputSource *src);
 
-std::string suffix(const std::string s,const char c='.')
+string suffix(const string s,const char c='.')
 {
 	size_t pos = s.find_last_of(c);
 

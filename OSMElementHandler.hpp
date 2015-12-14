@@ -27,14 +27,10 @@
 #include "OSMTagHandler.hpp"
 #include "XercesUtils.hpp"
 
-#include "OSMNode.hpp"
 #include "OSMRelation.hpp"
-#include "OSMWay.hpp"
 #include "SAX2AttributeHandler.hpp"
 #include "SAX2ElementHandler.hpp"
 
-class OSMEntity;
-class OSMNode;
 
 
 
@@ -59,8 +55,10 @@ private:
 public:
 
 	// required overrides from SAX2ElementHandler
-	virtual SAX2ElementHandler* getHandlerForElement(const XMLCh*const,const XMLCh*const,const XMLCh*const){ return nullptr; }
-	virtual void visitElementHandlers(Visitor*){}
+	virtual SAX2ElementHandler* getHandlerForElement(const XMLCh*const,const XMLCh*const,const XMLCh*const) override
+		{ return nullptr; }
+	virtual void visitElementHandlers(Visitor*) override
+		{}
 
 	OSMTagElementHandler(const std::string name,OSMTagHandler* defaultTagHandler) :
 		SAX2ElementHandler(name),
