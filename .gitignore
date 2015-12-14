@@ -34,3 +34,6 @@ osm2bin
 *.osm
 *.bz2
 *.bin
+Debug/
+Release/
+Makefile
