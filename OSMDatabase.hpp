@@ -59,12 +59,6 @@ public:
 	std::vector<OSMWay>  		ways() const { return ways_; }
 	std::vector<OSMRelation> 	relations() const { return relations_; }
 
-
-
-
-
-
-
 	std::vector<std::pair<std::string,unsigned>> nodeTagKeys() const { return tagKeys(nodes_,nodeTags_); }
 	std::vector<std::pair<std::string,unsigned>> wayTagKeys() const { return tagKeys(ways_,wayTags_); }
 	std::vector<std::pair<std::string,unsigned>> relationTagKeys() const { return tagKeys(relations_,relationTags_); }
