@@ -264,7 +264,7 @@ void MultipolyCloser::closeEndpointsToBoundary()
 	else
 		cout << "All terminals resolved" << endl;
 
-	for(auto it = m_endpoints.begin(); it != m_endpoints.end(); ++it)
+	for(auto it = m_endpoints.begin(); it != m_endpoints.end();)
 	{
 		assert(it->way != -1U);
 		assert(m_ways[it->way]);
@@ -288,10 +288,13 @@ void MultipolyCloser::closeEndpointsToBoundary()
 			else
 				newIt->prepend(it->waySegment);
 
-			m_endpoints.erase(it);
+			m_endpoints.erase(it++);
 		}
 		else
+		{
 			cout << "WARNING: Distance too far to edge (maxBoundaryDistance=" << m_maxBoundaryDistance << ")" << endl;
+			it++;
+		}
 	}
 }
 
