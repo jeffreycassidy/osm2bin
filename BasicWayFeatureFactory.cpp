@@ -24,9 +24,10 @@ BasicWayFeatureFactory::BasicWayFeatureFactory(const OSMDatabase& db): m_db(db),
 		m_kiTourism(db.wayTags().getIndexForKeyString("tourism")),
 		m_kiLeisure(db.wayTags().getIndexForKeyString("leisure")),
 		m_kiPlace(db.wayTags().getIndexForKeyString("place")),
+		m_kiWater(db.wayTags().getIndexForKeyString("water")),
 		m_kiName(db.wayTags().getIndexForKeyString("name")),
 		m_kiNameEn(db.wayTags().getIndexForKeyString("name:en")),
-		m_kiWater(db.wayTags().getIndexForKeyString("water")),
+
 
 		m_viLake(db.wayTags().getIndexForKeyString("lake")),
 		m_viPond(db.wayTags().getIndexForKeyString("pond")),
@@ -132,6 +133,8 @@ boost::optional<Feature> BasicWayFeatureFactory::operator()(const OSMWay& w) con
 		if (val==m_viPark ||
 				val==m_viNatureReserve)
 			type = Park;
+		else if (val == m_viGolfCourse)
+			type = Golfcourse;
 		else
 		{
 		//	cout << "Skipping way named '" << n << "' with tag leisure=" << m_db.wayTags().getValue(val) << endl;

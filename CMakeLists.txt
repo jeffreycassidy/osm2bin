@@ -82,6 +82,9 @@ if (GRAPHICS)
 	## draw lake outline	
 	ADD_EXECUTABLE(lake lake.cpp)
 	TARGET_LINK_LIBRARIES(lake OSMDatabase OSMParser ${CAIRO_LIBRARIES} ${CAIROMM_LIBRARIES} cairo cairomm-1.0)
+
+    ADD_EXECUTABLE(lakeBin lakeBin.cpp)
+    TARGET_LINK_LIBRARIES(lakeBin StreetsDatabase ${CAIRO_LIBRARIES} ${CAIROMM_LIBRARIES} cairo cairomm-1.0)
 	
 endif()
 
@@ -97,6 +100,16 @@ function (MAKE_BIN_TARGET fnroot)
 		${fnroot}_bin DEPENDS ${fnroot}.osm.bin ${fnroot}.streets.bin)
 endfunction()
 
+function (MAKE_WATERBIN_TARGET fnroot)
+	ADD_CUSTOM_COMMAND(
+		OUTPUT ${fnroot}.waterbin.pdf
+		COMMAND ./lakeBin ${fnroot}.streets.bin ${fnroot}.waterbin.pdf
+		DEPENDS lakeBin ${fnroot}.streets.bin
+		WORKING_DIRECTORY .)
+	ADD_CUSTOM_TARGET(
+		${fnroot}_waterbin DEPENDS ${fnroot}.waterbin.pdf)
+endfunction()
+
 function (MAKE_WATER_TARGET fnroot)
 	ADD_CUSTOM_COMMAND(
 		OUTPUT ${fnroot}.water.pdf
@@ -109,6 +122,7 @@ endfunction()
 
 SET (MAPS barcelona dresden_germany newyork hamilton_canada moscow saint_helena toronto cairo_egypt bejaia basel_switzerland)
 
+ADD_CUSTOM_TARGET(waterbins)
 ADD_CUSTOM_TARGET(waters)
 ADD_CUSTOM_TARGET(bins)
 
@@ -117,6 +131,8 @@ ADD_CUSTOM_TARGET(mapsdir COMMAND ln -sF ${MAPS_PATH} maps)
 FOREACH(map ${MAPS})
     MAKE_BIN_TARGET(${map})
 	MAKE_WATER_TARGET(${map})
+	MAKE_WATERBIN_TARGET(${map})
 	ADD_DEPENDENCIES(waters ${map}_water)
+	ADD_DEPENDENCIES(waterbins ${map}_waterbin)
     ADD_DEPENDENCIES(bins ${map}_bin)
 ENDFOREACH()

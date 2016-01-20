@@ -13,6 +13,7 @@
 #include <utility>
 
 #include "NodePOIFilter.hpp"
+#include "MultipolyCloser.hpp"
 
 #include "XercesUtils.hpp"
 #include "LoadOSM.hpp"
@@ -150,6 +151,13 @@ int main(int argc,char **argv)
 
 	cout << "==== Extracting basic features" << endl;
 
+
+
+	bool mapIsIsland=true;
+	bool mapHasUnboundedLake=false;
+
+	cout << "INFO: Starting on assumption that map is an island" << endl;
+
 	vector<Feature> features;
 	BasicWayFeatureFactory WF(db);
 	for(const auto& w : db.ways())
@@ -164,7 +172,65 @@ int main(int argc,char **argv)
 	for(const auto& r : db.relations())
 	{
 		// call the factory
-		FF(r);
+		auto feats = FF(r);
+		for(const auto f : feats)
+		{
+			cout << "  Created feature (" << asString(f.type()) << ") from relation ID " << r.id() << endl;
+
+			if (!f.bounded() && f.isWater())
+			{
+				mapIsIsland=false;
+				mapHasUnboundedLake=true;
+				cout << "INFO: Found an unbounded water feature, so we conclude this is not an island" << endl;
+			}
+			features.emplace_back(std::move(f));
+		}
+	}
+
+
+
+	vector<const OSMWay*> coastline;
+	unsigned m_kiNatural=db.wayTags().getIndexForKeyString("natural");
+	unsigned m_viCoastline=db.wayTags().getIndexForValueString("coastline");
+
+
+	// extract coastlines
+	for(const auto& w : db.ways())
+		if (w.hasTagWithValue(m_kiNatural,m_viCoastline))
+			coastline.push_back(&w);
+
+	cout << "Extracted " << coastline.size() << " ways with coastline tag" << endl;
+
+	MultipolyCloser C(db,coastline);
+	C.direction(MultipolyCloser::CCW);
+	vector<pair<vector<LatLon>,bool>> F = C.loops(MultipolyCloser::All);
+
+	mapIsIsland &= coastline.size()>0;
+
+	for(const auto& poly : F)
+		mapIsIsland &= poly.second;		// if none of the coastlines is unbounded, then we're looking at an island
+
+	if (F.size() == 0)
+	{
+		cout << "INFO: No coastlines, so I conclude this is not an island" << endl;
+		mapIsIsland=false;
+	}
+
+	if (mapIsIsland)
+		cout << "INFO: There are " << F.size() << " coastline ways, none unbounded so I still think the map is an island" << endl;
+
+	if (mapIsIsland)
+	{
+		cout << "INFO: Concluded the map is an island for lack of contradictory evidence" << endl;
+		features.emplace_back(0,Relation,Lake,"<big ocean>",db.corners());
+	}
+
+	for(auto& poly : F)
+	{
+		if (poly.second)	// was originally closed
+			features.emplace_back(0,Way,Island,"<unspecified>",std::move(poly.first));
+		else
+			features.emplace_back(0,Way,Lake,"<unspecified>",std::move(poly.first));
 	}
 
 	sdb.features(std::move(features));
@@ -189,25 +255,4 @@ int main(int argc,char **argv)
 	}
 
 	cout << "Road network has " << num_edges(G) << " edges" << endl;
-//
-//	for (const auto e : edges(G))
-//		assert(source(e,G) > target(e,G));
-
-//	auto E = edges(G);
-//
-//	auto e = *E.first;
-//	auto v = target(e,G);
-//	auto u = source(e,G);
-//
-//	cout << "Edge e(" << u << "," << v << ")" << endl;
-//
-//	cout << "Out-edges of u=" << u << endl;
-//	for(const auto oe : out_edges(u,G))
-//		cout << "  " << setw(6) << source(oe,G) << " <-> " << target(oe,G) << endl;
-//
-//
-//	cout << "Out-edges of v=" << v << endl;
-//	for(const auto oe : out_edges(v,G))
-//		cout << "  " << setw(6) << source(oe,G) << " <-> " << target(oe,G) << endl;
-
 }
