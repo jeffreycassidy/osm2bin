@@ -9,6 +9,7 @@
 #define COMPASS_HPP_
 
 #include <string>
+#include <stdexcept>
 
 enum struct CompassIntercardinal 	: uint8_t { NE=0,SE,SW,NW };
 
