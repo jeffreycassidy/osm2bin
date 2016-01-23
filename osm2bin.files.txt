@@ -2,11 +2,15 @@ BasicWayFeatureFactory.cpp
 BasicWayFeatureFactory.hpp
 BasicRelationFeatureFactory.cpp
 BasicRelationFeatureFactory.hpp
+Compass.hpp
+Compass.cpp
 FeatureFactory.hpp
 FeatureFactory.cpp
 CompressedFileInput.hpp
 LoadOSM.cpp
 LoadOSM.hpp
+MultipolyCloser.cpp
+MultipolyCloser.hpp
 NodePOIFilter.hpp
 OSMElementHandler.cpp
 OSMElementHandler.hpp
