@@ -159,8 +159,8 @@ MultipolyCloser::MultipolyCloser(const OSMDatabase& db,const vector<const OSMWay
 		m_db(db),
 		m_ways(ways),
 		m_bounds(db.bounds()),
-		m_waySegments(ways.size()),
-		m_wsAdded(ways.size(),false)
+		m_wsAdded(ways.size(),false),
+		m_waySegments(ways.size())
 {
 	////// Extract polygons and form list of endpoints
 
@@ -453,21 +453,24 @@ void MultipolyCloser::buildLoops()
 
 vector<pair<vector<LatLon>,bool>> MultipolyCloser::loops(Boundedness b) const
 {
-#warning "Boundedness parameter in MultipolyCloser::loops currently ignored"
-
 	cout << " Constructing return loops" << endl;
 
 	vector<pair<vector<LatLon>,bool>> o;
+	vector<LatLon> loop;
+	bool bounded;
 
 	for(const Segment* l : m_loops)
 	{
-		o.emplace_back(vector<LatLon>(),true);
+		loop.clear();
+		bounded=true;
 		for(const Segment* s=l; s != nullptr; s=s->nextEndingAt(l))
 		{
-			s->add(o.back().first);
+			s->add(loop);
 			if (dynamic_cast<const BoundaryPointSegment*>(s))
-				o.back().second=false;
+				bounded=false;
 		}
+		if (b == All || (b==Unbounded && !bounded) || (b==Bounded && bounded) )
+			o.emplace_back(std::move(loop),bounded);
 	}
 	return o;
 }

@@ -42,7 +42,6 @@ private:
 	unsigned m_kiNameEn=-1U;
 
 	// value indices
-	//unsigned m_viRiver=-1U;
 	unsigned m_viLake=-1U;				// water=
 	unsigned m_viPond=-1U;
 	unsigned m_viReservoir=-1U;

@@ -243,9 +243,9 @@ class MultipolyCloser::WaySegment : public MultipolyCloser::Segment
 public:
 	WaySegment(){}
 	WaySegment(const OSMDatabase& db,const OSMWay* w,unsigned idx=-1U) :
-		m_wayPtr(w),
+		m_way(idx),
 		m_points(db.extractPoly(*w)),
-		m_way(idx)
+		m_wayPtr(w)
 	{
 	}
 
