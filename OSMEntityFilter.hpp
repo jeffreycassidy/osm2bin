@@ -14,12 +14,14 @@ class OSMDatabase;
 
 template<class OSMEntityType>class OSMEntityFilter {
 public:
-	OSMEntityFilter(const OSMDatabase& db) : m_db(db){}
 
-	virtual bool operator()(const OSMEntityType& e) const=0;
+    OSMEntityFilter(const OSMDatabase& db) : m_db(db) {
+    }
+
+    virtual bool operator()(const OSMEntityType& e) const = 0;
 
 protected:
-	const OSMDatabase& m_db;
+    const OSMDatabase& m_db;
 };
 
 

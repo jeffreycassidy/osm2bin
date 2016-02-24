@@ -11,8 +11,7 @@
 
 using namespace std;
 
-ostream& operator<<(ostream& os,const OSMNode& n)
-{
-	return os << "Node id " << setw(12) << n.id() << " at coords " << setprecision(6) << n.coords();
+ostream& operator<<(ostream& os, const OSMNode& n) {
+    return os << "Node id " << setw(12) << n.id() << " at coords " << setprecision(6) << n.coords();
 }
 

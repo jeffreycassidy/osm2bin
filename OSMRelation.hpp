@@ -7,32 +7,46 @@
 
 class OSMRelation : public OSMEntity {
 public:
-	typedef enum { InvalidType, Node, Way, Relation } MemberType;
 
-	struct Member {
-		unsigned long long 	id;
-		MemberType			type;
-		unsigned 			role;		// string table index
+    typedef enum {
+        InvalidType, Node, Way, Relation
+    } MemberType;
 
-	private:
+    struct Member {
+        unsigned long long id;
+        MemberType type;
+        unsigned role; // string table index
 
-		template<class Archive> void serialize(Archive& ar,const unsigned){ ar & id & type & role ; }
-		friend class boost::serialization::access;
-	};
+    private:
 
-	OSMRelation(unsigned long long id=0) : OSMEntity(id){}
+        template<class Archive> void serialize(Archive& ar, const unsigned) {
+            ar & id & type & role;
+        }
+        friend class boost::serialization::access;
+    };
 
-	void addMember(unsigned long long id, MemberType type,unsigned role){ addMember(Member{id,type,role}); }
-	void addMember(const Member m){ members_.push_back(m); }
+    OSMRelation(unsigned long long id = 0) : OSMEntity(id) {
+    }
 
-	const std::vector<Member>& members() const { return members_; }
+    void addMember(unsigned long long id, MemberType type, unsigned role) {
+        addMember(Member{id, type, role});
+    }
+
+    void addMember(const Member m) {
+        members_.push_back(m);
+    }
+
+    const std::vector<Member>& members() const {
+        return members_;
+    }
 
 private:
-	std::vector<Member> members_;
+    std::vector<Member> members_;
 
-	template<class Archive>void serialize(Archive& ar,const unsigned)
-		{ ar & boost::serialization::base_object<OSMEntity>(*this) & members_; }
-	friend boost::serialization::access;
+    template<class Archive>void serialize(Archive& ar, const unsigned) {
+        ar & boost::serialization::base_object<OSMEntity>(*this) & members_;
+    }
+    friend boost::serialization::access;
 
 };
 

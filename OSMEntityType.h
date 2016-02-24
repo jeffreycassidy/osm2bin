@@ -9,10 +9,10 @@
 #define OSMENTITYTYPE_H_
 
 enum OSMEntityType {
-	Invalid=0,
-	Node,
-	Way,
-	Relation
+    Invalid = 0,
+    Node,
+    Way,
+    Relation
 };
 
 class OSMEntity;

@@ -20,45 +20,57 @@
 
 class ValueTable {
 public:
-	/// adds a value, returns the index
-	unsigned addValue(const std::string v)
-	{
-		values_.push_back(v);
-		return values_.size()-1;
-	}
+    /// adds a value, returns the index
 
-	/// gets a value
+    unsigned addValue(const std::string v) {
+        values_.push_back(v);
+        return values_.size() - 1;
+    }
 
-	const std::string& getValue(unsigned vi) const
-	{
-		return values_.at(vi);
-	}
+    /// gets a value
 
-	/// Checks if an index is within the valid range
-	bool valueValid(unsigned vi) const { return vi < values_.size(); }
+    const std::string& getValue(unsigned vi) const {
+        return values_.at(vi);
+    }
 
-	/// Linear-time search for the index of a string value value within the table, returning -1U if not found
-	unsigned getIndexOfValue(const std::string v) const
-	{
-		auto it = find(values_.begin(),values_.end(),v);
-		if (it == values_.end())
-			return -1U;
-		else
-			return it-values_.begin();
-	}
+    /// Checks if an index is within the valid range
 
-	/// Function object which takes an unsigned index and returns the corresponding string
-	std::function<const std::string&(unsigned)> valueLookup() const { return [this](unsigned i){ return cref(values_.at(i)); }; }
+    bool valueValid(unsigned vi) const {
+        return vi < values_.size();
+    }
 
-	/// Returns all the values (unsorted)
-	const std::vector<std::string>& values() const 	{ return values_; }
+    /// Linear-time search for the index of a string value value within the table, returning -1U if not found
+
+    unsigned getIndexOfValue(const std::string v) const {
+        auto it = find(values_.begin(), values_.end(), v);
+        if (it == values_.end())
+            return -1U;
+        else
+            return it - values_.begin();
+    }
+
+    /// Function object which takes an unsigned index and returns the corresponding string
+
+    std::function<const std::string&(unsigned) > valueLookup() const {
+        return [this](unsigned i) {
+            return cref(values_.at(i));
+        };
+    }
+
+    /// Returns all the values (unsorted)
+
+    const std::vector<std::string>& values() const {
+        return values_;
+    }
 
 private:
-	/// Vector of all strings in insertion order (unsorted)
-	std::vector<std::string> values_;
+    /// Vector of all strings in insertion order (unsorted)
+    std::vector<std::string> values_;
 
-	template<class Archive>void serialize(Archive& ar, const unsigned ver){ ar & values_; }
-	friend class boost::serialization::access;
+    template<class Archive>void serialize(Archive& ar, const unsigned ver) {
+        ar & values_;
+    }
+    friend class boost::serialization::access;
 };
 
 

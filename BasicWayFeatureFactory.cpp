@@ -7,7 +7,7 @@
 
 #include "OSMDatabase.hpp"
 
-#include "Feature.hpp"
+#include "Feature.h"
 
 #include <iostream>
 #include <utility>

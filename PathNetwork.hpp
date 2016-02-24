@@ -38,72 +38,78 @@
 
 #include "OSMDatabase.hpp"
 
-
-
 /** Specialization to pick out roads */
 
 class OSMWayFilterRoads : public OSMEntityFilter<OSMWay> {
 public:
-	OSMWayFilterRoads(const OSMDatabase& db,const std::vector<OSMNode>& nodes) :
-		OSMEntityFilter<OSMWay>(db),
-		kvt_(db.wayTags()),
-		kiName_(db.wayTags().getIndexForKeyString("name")),
-		kiHighway_(db.wayTags().getIndexForKeyString("highway"))
-	{
-		for (const char * const *s=includeHighwayTagValueStrings_; *s != nullptr; ++s)
-			includeHighwayTagValues_.insert(kvt_.getIndexForValueString(*s));
-	}
 
-	virtual bool operator()(const OSMWay& e) const override
-	{
-		unsigned vi = e.getValueForKey(kiHighway_);
-		return vi != -1U && includeHighwayTagValues_.count(vi);
-	}
+    OSMWayFilterRoads(const OSMDatabase& db, const std::vector<OSMNode>& nodes) :
+    OSMEntityFilter<OSMWay>(db),
+    kvt_(db.wayTags()),
+    kiName_(db.wayTags().getIndexForKeyString("name")),
+    kiHighway_(db.wayTags().getIndexForKeyString("highway")) {
+        for (const char * const *s = includeHighwayTagValueStrings_; *s != nullptr; ++s)
+            includeHighwayTagValues_.insert(kvt_.getIndexForValueString(*s));
+    }
+
+    virtual bool operator()(const OSMWay& e) const override
+    {
+        unsigned vi = e.getValueForKey(kiHighway_);
+        return vi != -1U && includeHighwayTagValues_.count(vi);
+    }
 
 private:
-	const KeyValueTable& kvt_;
-	unsigned kiName_=-1U;
-	unsigned kiHighway_=-1U;
+    const KeyValueTable& kvt_;
+    unsigned kiName_ = -1U;
+    unsigned kiHighway_ = -1U;
 
-	boost::container::flat_set<unsigned> includeHighwayTagValues_;
+    boost::container::flat_set<unsigned> includeHighwayTagValues_;
 
-	static const char * includeHighwayTagValueStrings_[];
+    static const char * includeHighwayTagValueStrings_[];
 };
 
 struct NodeInfo {
-	OSMID		osmid=-1ULL;
-	LatLon 		latlon;
+    OSMID osmid = -1ULL;
+    LatLon latlon;
 
 private:
-	friend boost::serialization::access;
-	template<class Archive>void serialize(Archive& ar,const unsigned ver){ ar & osmid & latlon; }
+    friend boost::serialization::access;
+
+    template<class Archive>void serialize(Archive& ar, const unsigned ver) {
+        ar & osmid & latlon;
+    }
 };
 
 struct EdgeProperties {
-	std::vector<LatLon>		curvePoints;
-	unsigned long long 		wayOSMID=-1U;
+    std::vector<LatLon> curvePoints;
+    unsigned long long wayOSMID = -1U;
 
-	unsigned 				streetVectorIndex=-1U;
-	unsigned				streetSegmentVectorIndex=-1U;		// <=== NOT SERIALIZED! MUST BE REBUILT BY PATHNETWORK
-	float 					maxspeed=50.0;
+    unsigned streetVectorIndex = -1U;
+    unsigned streetSegmentVectorIndex = -1U; // <=== NOT SERIALIZED! MUST BE REBUILT BY PATHNETWORK
+    float maxspeed = 50.0;
 
-	enum Oneway : uint8_t { Bidir=0, ToGreaterVertexNumber=1, ToLesserVertexNumber=2 };
+    enum Oneway : uint8_t {
+        Bidir = 0, ToGreaterVertexNumber = 1, ToLesserVertexNumber = 2
+    };
 
-	Oneway 					oneWay=Bidir;
+    Oneway oneWay = Bidir;
 
 private:
-	friend boost::serialization::access;
-	template<class Archive>void serialize(Archive& ar,const unsigned ver){ ar & curvePoints & wayOSMID & streetVectorIndex & maxspeed & oneWay; }
+    friend boost::serialization::access;
+
+    template<class Archive>void serialize(Archive& ar, const unsigned ver) {
+        ar & curvePoints & wayOSMID & streetVectorIndex & maxspeed & oneWay;
+    }
 };
 
 typedef boost::adjacency_list<
-		boost::vecS,				// outedgelist
-		boost::vecS,				// vertex list
-		boost::undirectedS,			// dir/undir/bidir
-		NodeInfo,
-		EdgeProperties,
-		boost::no_property,
-		boost::vecS> PathNetwork;
+boost::vecS, // outedgelist
+boost::vecS, // vertex list
+boost::undirectedS, // dir/undir/bidir
+NodeInfo,
+EdgeProperties,
+boost::no_property,
+boost::vecS> PathNetwork;
 
 #ifdef CLANG
 #define STDPAIR std::__1::pair
@@ -111,20 +117,22 @@ typedef boost::adjacency_list<
 #define STDPAIR std::pair
 #endif
 
-template<class Iterator>Iterator begin(STDPAIR<Iterator,Iterator> p,
-		typename std::iterator_traits<Iterator>::difference_type __sfinae=0)
-	{ return p.first; }
+template<class Iterator>Iterator begin(STDPAIR<Iterator, Iterator> p,
+        typename std::iterator_traits<Iterator>::difference_type __sfinae = 0) {
+    return p.first;
+}
 
-template<class Iterator>Iterator end(STDPAIR<Iterator,Iterator> p,
-		typename std::iterator_traits<Iterator>::difference_type __sfinae=0)
-	{ return p.second; }
+template<class Iterator>Iterator end(STDPAIR<Iterator, Iterator> p,
+        typename std::iterator_traits<Iterator>::difference_type __sfinae = 0) {
+    return p.second;
+}
 
 
-PathNetwork buildNetwork(const OSMDatabase& db,const OSMEntityFilter<OSMWay>& wayFilter);
+PathNetwork buildNetwork(const OSMDatabase& db, const OSMEntityFilter<OSMWay>& wayFilter);
 
 // build street names for network
 class OSMDatabase;
-std::vector<std::string> assignStreets(OSMDatabase* db,PathNetwork& G);
+std::vector<std::string> assignStreets(OSMDatabase* db, PathNetwork& G);
 
 void nameIntersections(PathNetwork& G);
 

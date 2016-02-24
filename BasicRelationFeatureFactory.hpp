@@ -10,7 +10,7 @@
 
 #include "OSMRelation.hpp"
 
-#include "Feature.hpp"
+#include "Feature.h"
 #include <boost/optional/optional.hpp>
 
 #include "FeatureFactory.hpp"

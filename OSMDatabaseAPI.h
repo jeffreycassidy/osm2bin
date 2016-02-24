@@ -14,12 +14,12 @@ unsigned long long getNumberOfWays();
 unsigned long long getNumberOfRelations();
 
 // Query all nodes in the database, by node index
-const OSMNode*          getNodeByIndex(unsigned idx);
-const OSMWay*           getWayByIndex(unsigned idx);
-const OSMRelation*      getRelationByIndex(unsigned idx);
+const OSMNode* getNodeByIndex(unsigned idx);
+const OSMWay* getWayByIndex(unsigned idx);
+const OSMRelation* getRelationByIndex(unsigned idx);
 
 // Count number of tags for a given OSMEntity (OSMWay/OSMNode/OSMRelation)
 unsigned getTagCount(const OSMEntity* e);
 
 // Return n'th key-value pair
-std::pair<std::string,std::string> getTagPair(const OSMEntity* e,unsigned idx);
+std::pair<std::string, std::string> getTagPair(const OSMEntity* e, unsigned idx);

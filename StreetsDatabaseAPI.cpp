@@ -21,105 +21,100 @@ StreetsDatabase streetsDB;
 using namespace std;
 
 // load the layer-2 streets database
-bool loadStreetsDatabaseBIN(const std::string fn)
-{
-	ifstream is(fn.c_str());
-	if (!is.good())
-		return false;
 
-	boost::archive::binary_iarchive ia(is);
+bool loadStreetsDatabaseBIN(const std::string fn) {
+    ifstream is(fn.c_str());
+    if (!is.good())
+        return false;
 
-	ia & streetsDB;
+    boost::archive::binary_iarchive ia(is);
 
-	return true;
+    ia & streetsDB;
+
+    return true;
 }
 
-
-void closeStreetDatabase()
-{
-	streetsDB = StreetsDatabase();
+void closeStreetDatabase() {
+    streetsDB = StreetsDatabase();
 }
 
 // aggregate queries
-unsigned getNumberOfStreets()
-{
-	return streetsDB.streets().size();
+
+unsigned getNumberOfStreets() {
+    return streetsDB.streets().size();
 }
 
-unsigned getNumberOfStreetSegments()
-{
-	return num_edges(streetsDB.roads());
+unsigned getNumberOfStreetSegments() {
+    return num_edges(streetsDB.roads());
 }
 
-unsigned getNumberOfIntersections()
-{
-	return num_vertices(streetsDB.roads());
+unsigned getNumberOfIntersections() {
+    return num_vertices(streetsDB.roads());
 }
 
-unsigned getNumberOfPointsOfInterest()
-{ return streetsDB.getNumberOfPOIs(); }
+unsigned getNumberOfPointsOfInterest() {
+    return streetsDB.getNumberOfPOIs();
+}
 
-unsigned getNumberOfFeatures()
-{ return streetsDB.getNumberOfFeatures(); }
+unsigned getNumberOfFeatures() {
+    return streetsDB.getNumberOfFeatures();
+}
 
 
 //------------------------------------------------
 // Intersection information
 
-std::string getIntersectionName		(unsigned intersectionID)
-{
-	std::set<unsigned> streetIDs;
+std::string getIntersectionName(unsigned intersectionID) {
+    std::set<unsigned> streetIDs;
 
-	const auto& G = streetsDB.roads();
-	const auto v = streetsDB.intersection(intersectionID);
+    const auto& G = streetsDB.roads();
+    const auto v = streetsDB.intersection(intersectionID);
 
-	for(const auto e : out_edges(v,G))
-		streetIDs.insert(G[e].streetVectorIndex);
+    for (const auto e : out_edges(v, G))
+        streetIDs.insert(G[e].streetVectorIndex);
 
-	auto it = streetIDs.begin();
-	stringstream ss;
+    auto it = streetIDs.begin();
+    stringstream ss;
 
-	if (it != streetIDs.end())
-		ss << streetsDB.streets().at(*(it++));
+    if (it != streetIDs.end())
+        ss << streetsDB.streets().at(*(it++));
 
-	for(; it != streetIDs.end(); ++it)
-		ss << " & " << streetsDB.streets().at(*it);
+    for (; it != streetIDs.end(); ++it)
+        ss << " & " << streetsDB.streets().at(*it);
 
-	return ss.str();
+    return ss.str();
 }
 
-LatLon 		getIntersectionPosition	(unsigned intersectionID)
-{
-	return (streetsDB.roads())[streetsDB.intersection(intersectionID)].latlon;
+LatLon getIntersectionPosition(unsigned intersectionID) {
+    return (streetsDB.roads())[streetsDB.intersection(intersectionID)].latlon;
 }
 
-OSMID 		getIntersectionOSMNodeID(unsigned intersectionID)
-{
-	return (streetsDB.roads())[streetsDB.intersection(intersectionID)].osmid;
+OSMID getIntersectionOSMNodeID(unsigned intersectionID) {
+    return (streetsDB.roads())[streetsDB.intersection(intersectionID)].osmid;
 }
 
 
 //number of street segments at an intersection
-unsigned getIntersectionStreetSegmentCount(unsigned intersectionID)
-{
-	return out_degree(streetsDB.intersection(intersectionID),streetsDB.roads());
+
+unsigned getIntersectionStreetSegmentCount(unsigned intersectionID) {
+    return out_degree(streetsDB.intersection(intersectionID), streetsDB.roads());
 }
 
 // find the street segments at an intersection. idx is from
 // 0..streetSegmentCount-1 (at this intersection)
-unsigned getIntersectionStreetSegment(unsigned intersectionID,unsigned idx)
-{
-	const auto& G = streetsDB.roads();
-	const auto  u = streetsDB.intersection(intersectionID);
 
-	const auto Es = out_edges(u,G);
+unsigned getIntersectionStreetSegment(unsigned intersectionID, unsigned idx) {
+    const auto& G = streetsDB.roads();
+    const auto u = streetsDB.intersection(intersectionID);
 
-	if (idx >= out_degree(u,G))
-		throw std::out_of_range("getIntersectionStreetSegment: idx");
+    const auto Es = out_edges(u, G);
 
-	const auto e =  *(begin(Es)+idx);
+    if (idx >= out_degree(u, G))
+        throw std::out_of_range("getIntersectionStreetSegment: idx");
 
-	return G[e].streetSegmentVectorIndex;
+    const auto e = *(begin(Es) + idx);
+
+    return G[e].streetSegmentVectorIndex;
 }
 
 
@@ -128,39 +123,39 @@ unsigned getIntersectionStreetSegment(unsigned intersectionID,unsigned idx)
 // Street segment information
 
 // return info struct for the requested street segment
-StreetSegmentInfo 	getStreetSegmentInfo(unsigned streetSegmentID)
-{
-	StreetSegmentInfo info;
 
-	const PathNetwork& G = streetsDB.roads();
-	const auto e = streetsDB.streetSegment(streetSegmentID);
+StreetSegmentInfo getStreetSegmentInfo(unsigned streetSegmentID) {
+    StreetSegmentInfo info;
 
-	info.from 				= source(e,G);
-	info.to   				= target(e,G);
+    const PathNetwork& G = streetsDB.roads();
+    const auto e = streetsDB.streetSegment(streetSegmentID);
 
-	info.oneWay = G[e].oneWay != EdgeProperties::Bidir;
+    info.from = source(e, G);
+    info.to = target(e, G);
 
-	// if should be going to greater vertex number (T) but to < from (F) then swap
-	// also if should be going to lesser vertex number (F) but to > from (T) also swap
+    info.oneWay = G[e].oneWay != EdgeProperties::Bidir;
 
-	if (info.oneWay && ((G[e].oneWay == EdgeProperties::ToGreaterVertexNumber) ^ (info.from < info.to)))
-		std::swap(info.from,info.to);
+    // if should be going to greater vertex number (T) but to < from (F) then swap
+    // also if should be going to lesser vertex number (F) but to > from (T) also swap
 
-	info.wayOSMID 			= G[e].wayOSMID;
-	info.streetID 			= G[e].streetVectorIndex;
-	info.speedLimit 		= G[e].maxspeed;
-	info.curvePointCount	= G[e].curvePoints.size();
+    if (info.oneWay && ((G[e].oneWay == EdgeProperties::ToGreaterVertexNumber) ^ (info.from < info.to)))
+        std::swap(info.from, info.to);
 
-	return info;
+    info.wayOSMID = G[e].wayOSMID;
+    info.streetID = G[e].streetVectorIndex;
+    info.speedLimit = G[e].maxspeed;
+    info.curvePointCount = G[e].curvePoints.size();
+
+    return info;
 }
 
 //fetch the latlon of the idx'th curve point
-LatLon 				getStreetSegmentCurvePoint	(unsigned streetSegmentID,unsigned idx)
-{
-	const PathNetwork& G = streetsDB.roads();
-	const auto e = streetsDB.streetSegment(streetSegmentID);
 
-	return G[e].curvePoints.at(idx);
+LatLon getStreetSegmentCurvePoint(unsigned streetSegmentID, unsigned idx) {
+    const PathNetwork& G = streetsDB.roads();
+    const auto e = streetsDB.streetSegment(streetSegmentID);
+
+    return G[e].curvePoints.at(idx);
 }
 
 
@@ -168,9 +163,8 @@ LatLon 				getStreetSegmentCurvePoint	(unsigned streetSegmentID,unsigned idx)
 //------------------------------------------------
 // Street information
 
-std::string getStreetName(unsigned streetID)
-{
-	return streetsDB.streets().at(streetID);		// throws exception if out of bounds
+std::string getStreetName(unsigned streetID) {
+    return streetsDB.streets().at(streetID); // throws exception if out of bounds
 }
 
 
@@ -178,26 +172,22 @@ std::string getStreetName(unsigned streetID)
 //------------------------------------------------
 // Points of interest
 
-std::string getPointOfInterestType(unsigned pointOfInterestID)
-{
-	return streetsDB.poi(pointOfInterestID).type();
+std::string getPointOfInterestType(unsigned pointOfInterestID) {
+    return streetsDB.poi(pointOfInterestID).type();
 }
 
-std::string getPointOfInterestName		(unsigned pointOfInterestID)
-{
-	return streetsDB.poi(pointOfInterestID).name();
-
-}
-
-LatLon 		getPointOfInterestPosition	(unsigned pointOfInterestID)
-{
-	return streetsDB.poi(pointOfInterestID).pos();
+std::string getPointOfInterestName(unsigned pointOfInterestID) {
+    return streetsDB.poi(pointOfInterestID).name();
 
 }
 
-OSMID 		getPointOfInterestOSMNodeID (unsigned pointOfInterestID)
-{
-	return streetsDB.poi(pointOfInterestID).osmNodeID();
+LatLon getPointOfInterestPosition(unsigned pointOfInterestID) {
+    return streetsDB.poi(pointOfInterestID).pos();
+
+}
+
+OSMID getPointOfInterestOSMNodeID(unsigned pointOfInterestID) {
+    return streetsDB.poi(pointOfInterestID).osmNodeID();
 }
 
 
@@ -205,35 +195,29 @@ OSMID 		getPointOfInterestOSMNodeID (unsigned pointOfInterestID)
 //------------------------------------------------
 // Natural features
 
-FeatureType     getFeatureType(unsigned featureID)
-{
-	return streetsDB.feature(featureID).type();
+FeatureType getFeatureType(unsigned featureID) {
+    return streetsDB.feature(featureID).type();
 }
 
-const string& getFeatureName(unsigned featureID)
-{
-	return streetsDB.feature(featureID).name();
+const string& getFeatureName(unsigned featureID) {
+    return streetsDB.feature(featureID).name();
 }
 
-OSMID			getFeatureOSMID(unsigned featureID)
-{
-	return streetsDB.feature(featureID).id().first;
+OSMID getFeatureOSMID(unsigned featureID) {
+    return streetsDB.feature(featureID).id().first;
 
 }
 
-OSMEntityType  	getFeatureOSMEntityType(unsigned featureID)
-{
-	return streetsDB.feature(featureID).id().second;
+OSMEntityType getFeatureOSMEntityType(unsigned featureID) {
+    return streetsDB.feature(featureID).id().second;
 }
 
-unsigned        getFeaturePointCount(unsigned featureID)
-{
-	return streetsDB.feature(featureID).pointCount();
+unsigned getFeaturePointCount(unsigned featureID) {
+    return streetsDB.feature(featureID).pointCount();
 
 }
 
-LatLon          getFeaturePoint(unsigned featureID, unsigned idx)
-{
-	return streetsDB.feature(featureID).point(idx);
+LatLon getFeaturePoint(unsigned featureID, unsigned idx) {
+    return streetsDB.feature(featureID).point(idx);
 }
 

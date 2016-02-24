@@ -10,7 +10,7 @@
 
 #include "OSMWay.hpp"
 
-#include "Feature.hpp"
+#include "Feature.h"
 #include <boost/optional/optional.hpp>
 
 class BasicWayFeatureFactory
